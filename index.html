@@ -1,20 +1,37 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <!-- for moving particles - http://jsfiddle.net/Y73pU/ -->
     <meta charset="utf-8">
-    <title>Street View events</title>
+    <title>Times Square - Street View</title>
     <style>
+    div.spec {
+        width:8px;
+        height:8px;
+        background-color: #006633;
+        position:absolute;
+        -moz-border-radius: 4px;
+        border-radius: 4px;
+    }
+    div.spec2 {
+        width:8px;
+        height:8px;
+        background-color: #FF6347;
+        position:absolute;
+        -moz-border-radius: 4px;
+        border-radius: 4px;
+    }
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
       #map {
         height: 100%;
       }
-      /* Optional: Makes the sample page fill the window. */
       html, body {
         height: 100%;
         margin: 0;
         padding: 0;
       }
+      
       #container {
         width: 650px;
         height: 400px;
@@ -22,46 +39,344 @@
         position: relative;
         transform: translate(-50%,-50%);
       }
-      #pano, #info {
+      #pano, #info_background {
 		width: 100%;
 		height: 100%;
 		position: absolute;
-		top: 0;
-		left: 0;
+		top: 0; left: 0;
 	  }
-	  #info {
-	  	visibility: hidden;
-	  	background: rgba(65,105,225, .45);
+	  #info_background {
+	  	pointer-events: none;
+        display: none;
+	  	background: rgba(240,248,255, .75);
 		z-index: 10;
 	  }
+      #box {
+        pointer-events: none;
+        z-index: 20;
+        width: 190px;
+        height: 125px;
+        position: absolute;
+        top: 55%; left: 65%;
+        transform: translate(0, -50%);
+      }
+      #box2 {
+        pointer-events: none;
+        z-index: 20;
+        width: 225px;
+        height: 125px;
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, 0);
+      }
+      #text_container, #text_container2 {
+        pointer-events: none;
+        display: none;
+        position: relative;
+        top: 0; left: 0;
+        width: 50%; height: 100%;
+        z-index: 25;
+        font-family: sans-serif;
+        font-size: 22px;
+      }
+      #text_container2 {
+        width: 100%; height: 50%;
+      }
+      #text {
+        position: absolute;
+        left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+      }
+      #text2 {
+       position: absolute;
+        left: 80px; top: 50%;
+        transform: translate(0%, -50%);
+        margin: 0; 
+      }
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7gymLhlJn6WF9Uu3qtPkZYxENnvVcJvk"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   </head>
   <body>
   	<div id="container">
 		<div id="pano"></div>
-		<div id="info">&nbsp</div>
+		<div id="info_background">&nbsp</div>
+        <div id = "text_container"> <p id="text">XYZ is known for ... chemical reaction ... lipids ... sodas ... more informations ... more information ... </p> </div>
+        <div id = "text_container2"> <p id="text2">Billboards are known for having, pigment, etc etc </p> </div>
   	</div>
+
     <script>
+        (function() {
+    var x, y, $elie, pos, nowX, nowY, i, $that, vel, deg, fade, curve, ko, mo, oo, grow, len;
+    // Returns a random integer between min and max  
+    // Using Math.round() will give you a non-uniform distribution!  
+    function ran(min, max) {  
+        return Math.floor(Math.random() * (max - min + 1)) + min;  
+    } 
+    function moveIt() {
+        $("div.spec2").each(function(i, v) {
+            $elie = $(v);
+            if (! $elie.data("time")) {
+                $elie.data("time", ran(30, 100));
+                $elie.data("deg", ran(-179, 180));
+                $elie.data("vel", ran(3, 10));  
+                $elie.data("curve", ran(0, 1));
+                $elie.data("fade", ran(0, 1));
+                $elie.data("grow", ran(-2, 2));                
+            }
+            
+            vel = $elie.data("vel");
+            deg = $elie.data("deg");
+            fade = $elie.data("fade");            
+            curve = $elie.data("curve");
+            grow = $elie.data("grow");
+            
+            len = $elie.width();
+            if (grow > 0)
+                len = Math.min(len + grow, 10);
+            else
+                len = Math.max(len + grow, 5);
+            
+            $elie.css("-moz-border-radius", len/2);
+            $elie.css("border-radius", len/2);
+            
+            $elie.css("width", len);
+            $elie.css("height", len);
+            
+            pos = $elie.position();            
+            
+            $elie.data("time", $elie.data("time") - 1);
+            
+            if (curve)
+                $elie.data("deg", (deg + 5) % 180);
+            else
+                $elie.data("deg", (deg - 5) % 180);
+            
+            ko = $elie.css("-khtml-opacity");
+            mo = $elie.css("-moz-opacity");
+            oo = $elie.css("opacity");
+            if (fade)
+            {
+                $elie.css("-khtml-opacity", Math.max(ko - .1, .5));
+                $elie.css("-moz-opacity", Math.max(mo - .1, .5));
+                $elie.css("opacity", Math.max(oo - .1, .5));
+            } else
+            {
+                $elie.css("-khtml-opacity", Math.min(ko - -.1, 1));
+                $elie.css("-moz-opacity", Math.min(mo - -.1, 1));
+                $elie.css("opacity", Math.min(oo - -.1, 1));                
+            }
+            
+            if (vel < 3)
+                $elie.data("time", 0);
+            else
+                $elie.data("vel", vel - .2);            
+            
+            
+            nowX = pos.left;
+            nowY = pos.top;
+
+            x = vel * Math.cos(deg * Math.PI/180);
+            y = vel * Math.sin(deg * Math.PI/180);
+            
+            nowX = nowX + x;            
+            nowY = nowY + y;
+            
+            if (nowX < 0)
+                nowX = 215 + nowX;
+            else
+                nowX = nowX % 215;
+            
+            if (nowY < 0)
+                nowY = 115 + nowY;
+            else
+                nowY = nowY % 115;            
+            $elie.css("left", nowX);
+            $elie.css("top",  nowY);
+        });
+    }
+    $(function() {
+        $(document.createElement('div')).appendTo(document.getElementById('container')).attr('id', 'box2');
+        $('#box2').css('display', 'none');
+        $elie = $("<div/>").attr("class","spec2");
+        // Note that math random is inclussive for 0 and exclussive for Max
+        for (i = 0; i < 100; ++i)
+        {
+            $that = $elie.clone();  
+            $that.css("top", ran(0, 120));
+            $that.css("left", ran(0, 220));            
+            $("#box2").append($that);            
+        }          
+        timer = setInterval(moveIt, 60);
+        $("input").toggle(function() {
+            clearInterval(timer);
+            this.value = " Start ";
+        }, function() {
+            timer = setInterval(moveIt, 60);        
+            this.value = " Stop ";            
+        });        
+    });
+}());
+
+    (function() {
+    var x, y, $elie, pos, nowX, nowY, i, $that, vel, deg, fade, curve, ko, mo, oo, grow, len;
+    // Returns a random integer between min and max  
+    // Using Math.round() will give you a non-uniform distribution!  
+    function ran(min, max) {  
+        return Math.floor(Math.random() * (max - min + 1)) + min;  
+    } 
+    function moveIt() {
+        $("div.spec").each(function(i, v) {
+            $elie = $(v);
+            if (! $elie.data("time")) {
+                $elie.data("time", ran(30, 100));
+                $elie.data("deg", ran(-179, 180));
+                $elie.data("vel", ran(3, 10));  
+                $elie.data("curve", ran(0, 1));
+                $elie.data("fade", ran(0, 1));
+                $elie.data("grow", ran(-2, 2));                
+            }
+            
+            vel = $elie.data("vel");
+            deg = $elie.data("deg");
+            fade = $elie.data("fade");            
+            curve = $elie.data("curve");
+            grow = $elie.data("grow");
+            
+            len = $elie.width();
+            if (grow > 0)
+                len = Math.min(len + grow, 10);
+            else
+                len = Math.max(len + grow, 5);
+            
+            $elie.css("-moz-border-radius", len/2);
+            $elie.css("border-radius", len/2);
+            
+            $elie.css("width", len);
+            $elie.css("height", len);
+            
+            pos = $elie.position();            
+            
+            $elie.data("time", $elie.data("time") - 1);
+            
+            if (curve)
+                $elie.data("deg", (deg + 5) % 180);
+            else
+                $elie.data("deg", (deg - 5) % 180);
+            
+            ko = $elie.css("-khtml-opacity");
+            mo = $elie.css("-moz-opacity");
+            oo = $elie.css("opacity");
+            if (fade)
+            {
+                $elie.css("-khtml-opacity", Math.max(ko - .1, .5));
+                $elie.css("-moz-opacity", Math.max(mo - .1, .5));
+                $elie.css("opacity", Math.max(oo - .1, .5));
+            } else
+            {
+                $elie.css("-khtml-opacity", Math.min(ko - -.1, 1));
+                $elie.css("-moz-opacity", Math.min(mo - -.1, 1));
+                $elie.css("opacity", Math.min(oo - -.1, 1));                
+            }
+            
+            if (vel < 3)
+                $elie.data("time", 0);
+            else
+                $elie.data("vel", vel - .2);            
+            
+            
+            nowX = pos.left;
+            nowY = pos.top;
+
+            x = vel * Math.cos(deg * Math.PI/180);
+            y = vel * Math.sin(deg * Math.PI/180);
+            
+            nowX = nowX + x;            
+            nowY = nowY + y;
+            
+            if (nowX < 0)
+                nowX = 170 + nowX;
+            else
+                nowX = nowX % 170;
+            
+            if (nowY < 0)
+                nowY = 115 + nowY;
+            else
+                nowY = nowY % 115;            
+            $elie.css("left", nowX);
+            $elie.css("top",  nowY);
+        });
+    }
+    $(function() {
+        $(document.createElement('div')).appendTo(document.getElementById('container')).attr('id', 'box');
+        $('#box').css('display', 'none');
+        $elie = $("<div/>").attr("class","spec");
+        // Note that math random is inclussive for 0 and exclussive for Max
+        for (i = 0; i < 100; ++i)
+        {
+            $that = $elie.clone();  
+            $that.css("top", ran(0, 120));
+            $that.css("left", ran(0, 175));            
+            $("#box").append($that);            
+        }          
+        timer = setInterval(moveIt, 60);
+        $("input").toggle(function() {
+            clearInterval(timer);
+            this.value = " Start ";
+        }, function() {
+            timer = setInterval(moveIt, 60);        
+            this.value = " Stop ";            
+        });        
+    });
+}());
+
+
     var panorama = new google.maps.StreetViewPanorama(
         document.getElementById('pano'), {
-        	position: {lat: 40.7061, lng: -73.9969},
+        	position: {lat: 40.7589, lng: -73.9851},
             pov: {
-                heading: 0,
-                pitch: 0
+                heading: 85,
+                pitch: 15
             },
-            visible: true,
-         	disableDefaultUI: true
+            visible: true/*,
+         	disableDefaultUI: true*/
     });
-    
+    var current_pos = {lat: 40.7589, lng: -73.9851};
+    var cheat = 0
     window.setInterval(function() {
     	var pov = panorama.getPov();
-    	if (Math.round(10*pov.heading)/10 == 37.5) {
-    		document.getElementById('info').style.visibility = 'visible';
-    	}
+        console.log(cheat);
+    	if (Math.round(10*pov.heading)/10 == 95.8) {
+            document.getElementById('info_background').style.display = 'block';
+    		document.getElementById('text_container').style.display = 'block';
+            $('#box').css('display', 'block');
+            window.setTimeout(function(){
+                pov.heading = 97;
+            }, 10000);
+    	}  else if (Math.round(10*pov.heading)/10 == 180.8) {
+            var zoomLevel = panorama.getZoom();
+            console.log(zoomLevel);
+            if (zoomLevel == 2) {
+                cheat += 1;
+                var opaque_background = document.getElementById('info_background');
+                opaque_background.style.display = 'block';
+                opaque_background.style.background = "rgba(240,248,255, .6)";
+                document.getElementById('text_container2').style.display = 'block';
+                $('#box2').css('display', 'block');
+            } else if (zoomLevel < 2 && cheat > 0) {
+                document.getElementById('info_background').style.display = 'none';
+                document.getElementById('text_container2').style.display = 'none';
+                $('#box2').css('display', 'none');
+                pov.heading = 182;
+            }
+        }
     	else {
-    		pov.heading += 0.05;
-    		panorama.setPov(pov);
+            document.getElementById('info_background').style.display = 'none';
+            document.getElementById('text_container').style.display = 'none';
+            $('#box').css('display', 'none');
+    		pov.heading += 0.08;
+            panorama.setPov(pov);
     	}
 	}, 10);
     </script>
